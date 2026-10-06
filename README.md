@@ -1,6 +1,6 @@
 # worldforest_efi
 
-Loads WorldForest / LCFM map layers for EFI plots and computes statistics and figures.
+Loads different layers for EFI plots and computes statistics and figures.
 The workflow lives in `WF_tool_prototype.ipynb` and is run on a remote desktop with access to the data.
 
 ## Code layout (`utils/`)
