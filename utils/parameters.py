@@ -42,12 +42,14 @@ CANOPY_HEIGHT = {
     "name": "Canopy height",
     "filename": "/data/open/worldforest/CanopyHeight/merged_pred_q050.vrt",
     "cmap": "viridis",
+    "units": "m",
 }
 
 FOLIAGE_HEIGHT_DIVERSITY = {
     "name": "Foliage Height Diversity",
     "filename": "/data/open/worldforest/FoliageHeightDiversity/map.vrt",
     "cmap": "plasma",
+    "units": "dimensionless index",
 }
 
 LANDCOVER = {
@@ -109,6 +111,7 @@ LATEST_DISTURBANCE = {
     "name": "Latest Disturbance",
     "filename": "/data/open/worldforest/ForestDisturbanceAtlas/LatestDisturbance/latest_disturbance.vrt",
     "cmap": "Spectral_r",
+    "units": "year",
 }
 
 AGENT_AGGREGATED = {

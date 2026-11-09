@@ -97,3 +97,22 @@ class SpatialBounds:
 
     def __repr__(self):
         return f"SpatialBounds(original={self.xy}, latlon={self.latlon})"
+
+
+def select_plot(df, plot_name, margin_km=1.0):
+    """
+    Select a plot by ``plot_name`` from an EFI GeoDataFrame.
+
+    Returns ``(plot_spatial, extents)`` where ``extents`` maps labels to bounds
+    dicts (plot and surrounding window) for use in the statistics tables.
+    """
+    selected_plot = df.loc[df.plot_name == plot_name]
+    if selected_plot.empty:
+        raise ValueError(f"Plot '{plot_name}' not found in the EFI plot table")
+
+    plot_spatial = SpatialBounds(selected_plot.geometry, margin_km=margin_km)
+    extents = {
+        "100m plot": plot_spatial.xy,
+        f"{margin_km * 2:g} km window": plot_spatial.expanded_xy,
+    }
+    return plot_spatial, extents

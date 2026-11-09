@@ -1,24 +1,27 @@
 # worldforest_efi
 
-Loads different layers for EFI plots and computes statistics and figures.
-The workflow lives in `WF_tool_prototype.ipynb` and is run on a remote desktop with access to the data.
+Shows WorldForest / LCFM map layers around a single **EFI 100 m × 100 m plot** and summarises them as
+figures and tables. Every statistic is computed for several **spatial extents** (the plot itself and a
+surrounding window) so the plot can be compared with its neighbourhood.
+The workflow lives in `WF_tool_prototype.ipynb` and is run on a remote desktop with access to the data
+(`/data/open/worldforest/...` rasters and the Terrascope STAC, `stac.terrascope.be`).
 
-## Code layout (`utils/`)
+## Layers
 
-| Module | Purpose |
-|---|---|
-| `parameters.py` | Layer configurations: raster paths, STAC collections, class names/colors |
-| `spatial.py` | `SpatialBounds` – plot extents in the original CRS and EPSG:4326, with km margins |
-| `layers.py` | `ClassMap` – a map layer loaded from a local raster or a STAC collection, with colormap/legend |
-| `plotting.py` | `plot_map` / `overlay_rectangle` matplotlib helpers, `style_table` for colored DataFrames |
-| `stats.py` | Multi-extent tables: `class_distribution_table`, `layer_stats_table`, `compute_disturbance_stats` (+ `get_stats`, `class_distribution_percent`) |
-| `read_stac.py` | STAC search (`stac.terrascope.be`) and reading of local assets |
-| `worldforest.py` | Facade: re-exports the above and instantiates the configured layers |
+All layers are available from `from utils import worldforest` and share the same interface
+(`.load_data(extent)` and `.plot(data, ...)`).
 
-```python
-from utils import worldforest as wf
+|Layer                                       |Description                                                                              |
+|--------------------------------------------|-----------------------------------------------------------------------------------------|
+|`worldforest.genus_map_class`               |Dominant tree genus (classified)                                                         |
+|`worldforest.canopy_height_class`           |Canopy height in m (continuous)                                                          |
+|`worldforest.foliage_height_diversity_class`|Foliage height diversity, FHD (continuous)                                               |
+|`worldforest.land_cover`                    |LCFM 10 m land cover, 11 thematic classes (classified, STAC collection `lcfm-lcm-10`)    |
+|`worldforest.annual_disturbance_class`      |Forest Disturbance Atlas: disturbance per year, 1985–2024                                |
+|`worldforest.disturbance_agent_class`       |Forest Disturbance Atlas: cause of disturbance per year, 1985–2024                       |
+|`worldforest.latest_disturbance_class`      |Forest Disturbance Atlas: year of the most recent disturbance per pixel (continuous)     |
+|`worldforest.agent_aggregated_class`        |Forest Disturbance Atlas: dominant disturbance agent per pixel (e.g. harvest, wind/bark beetle, fire)|
 
-plot_spatial = wf.SpatialBounds(selected_plot.geometry, margin_km=1.0)
-data = wf.land_cover.load_data(plot_spatial.expanded_xy)   # STAC collection "lcfm-lcm-10"
-wf.land_cover.plot(data, overlay_extent=plot_spatial.latlon)
-```
+## Usage
+
+See `WF_tool_prototype.ipynb` for the full workflow: plot selection, maps, statistics and figures for every layer.

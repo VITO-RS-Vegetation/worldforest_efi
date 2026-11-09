@@ -97,11 +97,15 @@ def class_distribution_table(layer, extents: Mapping[str, Bounds], **load_kwargs
     Class distribution (%) of a classified layer for several extents.
 
     Returns columns ``class``, ``class_name`` and one column per extent label
-    (percentage of valid pixels; 0 where a class is absent).
+    (percentage of valid pixels; 0 where a class is absent). The number of
+    valid pixels per extent is stored in ``table.attrs['n_pixels']``.
     """
     table = None
+    n_pixels = {}
     for extent_name, bounds in extents.items():
-        dist = class_distribution_percent(layer.load_data(bounds, True, **load_kwargs))
+        data = layer.load_data(bounds, True, **load_kwargs)
+        n_pixels[extent_name] = int(np.ma.asarray(data).count())
+        dist = class_distribution_percent(data)
         dist = dist.rename(columns={"percent": extent_name})
         table = dist if table is None else pd.merge(table, dist, on="class", how="outer")
     if table is None:
@@ -109,7 +113,9 @@ def class_distribution_table(layer, extents: Mapping[str, Bounds], **load_kwargs
     table = table.fillna(0)
     class_dict = layer.class_dict or {}
     table.insert(1, "class_name", table["class"].map(lambda c: class_dict.get(c, f"Unknown ({c})")))
-    return table.sort_values("class").reset_index(drop=True)
+    table = table.sort_values("class").reset_index(drop=True)
+    table.attrs["n_pixels"] = n_pixels
+    return table
 
 
 def layer_stats_table(layers: Mapping[str, object], extents: Mapping[str, Bounds], debug=False) -> pd.DataFrame:

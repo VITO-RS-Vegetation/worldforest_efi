@@ -73,6 +73,7 @@ class ClassMap:
         class_dict=None,
         class_colors=None,
         cmap=None,
+        units="",
     ):
         if (filename is None) == (collection is None):
             raise ValueError("Provide exactly one of 'filename' or 'collection'.")
@@ -84,6 +85,7 @@ class ClassMap:
             self.filename = filename
 
         self.cmap = cmap
+        self.units = units
         self.norm = None
         self.legend_handles = None
         self.class_dict = class_dict

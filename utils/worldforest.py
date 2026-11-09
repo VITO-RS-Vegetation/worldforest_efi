@@ -14,10 +14,25 @@ Typical use::
 
 from . import parameters
 from .layers import ClassMap
-from .plotting import overlay_rectangle, plot_map
-from .spatial import SpatialBounds
-from .plotting import style_table
-from .stats import class_distribution_percent, class_distribution_table, get_stats, layer_stats_table
+from .plotting import (
+    map_all_plots,
+    map_plot_location,
+    overlay_rectangle,
+    pick_plot_on_map,
+    plot_class_distribution,
+    plot_map,
+    plot_value_distributions,
+    show_bbox_table,
+    style_table,
+)
+from .plotting import plot_disturbance_timeline as _plot_disturbance_timeline
+from .spatial import SpatialBounds, select_plot
+from .stats import (
+    class_distribution_percent,
+    class_distribution_table,
+    get_stats,
+    layer_stats_table,
+)
 from .stats import compute_disturbance_stats as _compute_disturbance_stats
 
 # Configured layers -----------------------------------------------------------
@@ -47,24 +62,39 @@ def compute_disturbance_stats(years, extents):
     )
 
 
+def plot_disturbance_timeline(df, years=years, title=None):
+    """Yearly disturbance chart per extent, stacked by the configured agents."""
+    return _plot_disturbance_timeline(
+        df, years, parameters.AGENT_CLASS_NAMES, parameters.AGENT_CLASS_COLORS, title=title
+    )
+
+
 __all__ = [
-    "parameters",
     "ClassMap",
     "SpatialBounds",
-    "plot_map",
-    "overlay_rectangle",
-    "style_table",
+    "agent_aggregated_class",
+    "annual_disturbance_class",
+    "canopy_height_class",
     "class_distribution_percent",
     "class_distribution_table",
-    "get_stats",
-    "layer_stats_table",
     "compute_disturbance_stats",
-    "genus_map_class",
-    "canopy_height_class",
-    "foliage_height_diversity_class",
-    "land_cover",
-    "annual_disturbance_class",
     "disturbance_agent_class",
+    "foliage_height_diversity_class",
+    "genus_map_class",
+    "get_stats",
+    "land_cover",
     "latest_disturbance_class",
-    "agent_aggregated_class",
+    "layer_stats_table",
+    "map_all_plots",
+    "map_plot_location",
+    "overlay_rectangle",
+    "parameters",
+    "pick_plot_on_map",
+    "plot_class_distribution",
+    "plot_disturbance_timeline",
+    "plot_map",
+    "plot_value_distributions",
+    "select_plot",
+    "show_bbox_table",
+    "style_table",
 ]
