@@ -21,6 +21,7 @@ All layers are available from `from utils import worldforest` and share the same
 |`worldforest.disturbance_agent_class`       |Forest Disturbance Atlas: cause of disturbance per year, 1985–2024                       |
 |`worldforest.latest_disturbance_class`      |Forest Disturbance Atlas: year of the most recent disturbance per pixel (continuous)     |
 |`worldforest.agent_aggregated_class`        |Forest Disturbance Atlas: dominant disturbance agent per pixel (e.g. harvest, wind/bark beetle, fire)|
+|`worldforest.combined_drought_indicator`  |Combined Drought Indicator (EDO): one GeoTIFF per date, classified; `load_data(extent, date="YYYYMMDD")`|
 
 ## Usage
 

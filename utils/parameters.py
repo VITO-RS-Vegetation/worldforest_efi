@@ -120,3 +120,30 @@ AGENT_AGGREGATED = {
     "class_dict": AGENT_CLASS_NAMES,
     "class_colors": AGENT_CLASS_COLORS,
 }
+
+COMBINED_DROUGHT_INDICATOR = {
+    "name": "Combined Drought Indicator",
+    "datafolder": "/data/open/worldforest/CombinedDroughtIndicator/",
+    "class_dict": {
+        0: "No drought",
+        1: "Watch. Precipitation deficit",
+        2: "Warning. Soil moisture deficit following precipitation deficit",
+        3: "Alert. Vegetation stress following precipitation / soil moisture deficit",
+        4: "Recovery to normal condition",
+        5: "Temporary soil moisture recovery",
+        6: "Temporary vegetation recovery",
+        7: "No data inside LISFLOOD domain",
+        8: "Outside LISFLOOD domain",
+    },
+    "class_colors": {
+        0: "#d9d9d9",  # 0: No drought (grey)
+        1: "#a6bddb",  # 1: Watch (light blue)
+        2: "#3690c0",  # 2: Warning (blue)
+        3: "#f03b20",  # 3: Alert (red)
+        4: "#31a354",  # 4: Recovery (green)
+        5: "#feb24c",  # 5: Temp soil moisture recovery (orange)
+        6: "#ffeda0",  # 6: Temp vegetation recovery (yellow)
+        7: "#636363",  # 7: No data inside LISFLOOD (dark grey)
+        8: "#000000",  # 8: Outside LISFLOOD (black)
+    }
+}

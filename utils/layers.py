@@ -1,9 +1,11 @@
 """Map layers: configuration, data loading (raster or STAC) and class styling."""
 
-from typing import Optional
+import re
+from pathlib import Path
 
 import matplotlib.patches as mpatches
 import numpy as np
+import pandas as pd
 import rasterio
 import rioxarray  # noqa: F401  (registers the ``.rio`` accessor)
 import xarray as xr
@@ -96,7 +98,9 @@ class ClassMap:
             self.class_colors = self._normalize_colors(class_colors)
             self.class_ids = sorted(class_dict.keys())
             self.class_names = [class_dict[c] for c in self.class_ids]
-            self.cmap = mcolors.ListedColormap([self.class_colors[c] for c in self.class_ids])
+            self.cmap = mcolors.ListedColormap(
+                [self.class_colors[c] for c in self.class_ids]
+            )
             bounds = np.array(self.class_ids + [self.class_ids[-1] + 1]) - 0.5
             self.norm = mcolors.BoundaryNorm(bounds, self.cmap.N)
             self.legend_handles = [
@@ -107,7 +111,11 @@ class ClassMap:
                 for class_id in self.class_ids
             ]
 
-        self.load_data = self.get_data_from_stac if collection is not None else self.get_data_from_raster
+        self.load_data = (
+            self.get_data_from_stac
+            if collection is not None
+            else self.get_data_from_raster
+        )
 
     @staticmethod
     def _normalize_colors(class_colors):
@@ -121,15 +129,28 @@ class ClassMap:
         """Colored patch per class, or None for continuous layers."""
         return self.legend_handles
 
-    def plot(self, data, ax=None, overlay_extent=None, overlay_label=None, title=None, **kwargs):
+    def plot(
+        self,
+        data,
+        ax=None,
+        overlay_extent=None,
+        overlay_label=None,
+        title=None,
+        **kwargs,
+    ):
         """Plot ``data`` styled by this layer. See :func:`utils.plotting.plot_map`."""
         return plotting.plot_map(
-            data, self, ax=ax, overlay_extent=overlay_extent,
-            overlay_label=overlay_label, title=title, **kwargs
+            data,
+            self,
+            ax=ax,
+            overlay_extent=overlay_extent,
+            overlay_label=overlay_label,
+            title=title,
+            **kwargs,
         )
 
     def get_data_from_raster(
-        self, spatial_extent: Bounds, masked_array=False, year: Optional[int] = None
+        self, spatial_extent: Bounds, masked_array=False, year: int | None = None
     ):
         """
         Read the first band of the raster for a spatial extent.
@@ -142,8 +163,15 @@ class ClassMap:
         with rasterio.open(filename, masked=True) as src:
             bounds = _extent_to_crs(spatial_extent, src.crs)
             rb = src.bounds
-            if bounds[0] < rb.left or bounds[2] > rb.right or bounds[1] < rb.bottom or bounds[3] > rb.top:
-                raise ValueError("The specified bounds are outside the raster's extent.")
+            if (
+                bounds[0] < rb.left
+                or bounds[2] > rb.right
+                or bounds[1] < rb.bottom
+                or bounds[3] > rb.top
+            ):
+                raise ValueError(
+                    "The specified bounds are outside the raster's extent."
+                )
 
             window = from_bounds(*bounds, transform=src.transform)
             data = src.read(1, window=window, masked=True)
@@ -174,7 +202,9 @@ class ClassMap:
         Returns a masked array if ``masked_array`` is True, else a DataArray with
         x/y and 2D lon/lat coordinates (same layout as ``get_data_from_raster``).
         """
-        bbox_4326 = list(_extent_to_crs(spatial_extent, rasterio.crs.CRS.from_epsg(4326)))
+        bbox_4326 = list(
+            _extent_to_crs(spatial_extent, rasterio.crs.CRS.from_epsg(4326))
+        )
         da = read_stac.get_stac_client(self.collection, bbox_4326, temporal_extent)
         if da is None:
             raise ValueError(
@@ -185,12 +215,123 @@ class ClassMap:
 
         nodata = da.rio.nodata if da.rio.nodata is not None else da.rio.encoded_nodata
         values = da.values
-        data = np.ma.masked_equal(values, nodata) if nodata is not None else np.ma.masked_invalid(values)
+        data = (
+            np.ma.masked_equal(values, nodata)
+            if nodata is not None
+            else np.ma.masked_invalid(values)
+        )
         if masked_array:
             return data
 
-        return _build_dataarray(data, da.x.values, da.y.values, da.rio.crs, da.attrs.get("units", ""))
+        return _build_dataarray(
+            data, da.x.values, da.y.values, da.rio.crs, da.attrs.get("units", "")
+        )
 
     def __repr__(self):
-        source = f"collection={self.collection!r}" if self.collection else f"filename={self.filename!r}"
+        source = (
+            f"collection={self.collection!r}"
+            if self.collection
+            else f"filename={self.filename!r}"
+        )
         return f"ClassMap(name={self.name!r}, {source}, class_ids={self.class_ids})"
+
+
+class DatedClassMap:
+    """
+    Classified layer stored as one GeoTIFF per date in ``datafolder``; the date
+    (YYYYMMDD) is parsed from the filename with ``date_pattern``.
+
+    ``load_data(spatial_extent, date="YYYYMMDD")`` reads one date (default: latest);
+    ``df`` lists the available rasters; ``load_time_series(spatial_extent)`` returns a ``{date: DataArray}`` dict.
+    """
+
+    def __init__(
+        self,
+        name,
+        datafolder,
+        date_pattern=r"cdinx_m_edo_(\d{8})_t_",
+        class_dict=None,
+        class_colors=None,
+    ):
+        self.name = name
+        self.pattern =g re.compile(date_pattern)
+        self.datafolder = Path(datafolder)
+        self.filename = {}
+        self.all_files = self.datafolder.rglob("*.tif")
+        self.dates = sorted(self.filename)
+        self.class_dict = class_dict
+        self.class_colors = class_colors
+        self.cmap = None
+        self.norm = None
+        self.legend_handles = None
+
+    def extract_point_data(self, lat, lon):
+        """
+        Extracts the value at (lon, lat) from each tif file.
+        Returns a list of (filename, value) tuples.
+        """
+        results = []
+        for tif in self.all_files:
+            # get date and year
+            match = self.pattern.search(tif.name)
+            if match:
+                date_str = match.group(1)
+                month_day = date_str[4:6] + "-" + date_str[6:8]
+                year = date_str[:4]
+            with rasterio.open(tif) as ds:
+                # Transform (lon, lat) to pixel coordinates
+                row, col = ds.index(lon, lat)
+                # Read the value at that pixel (first band)
+                value = ds.read(1)[row, col]
+                results.append([tif, year, month_day, value])
+        self.df = pd.DataFrame(
+            results, columns=["filename", "year", "month_day", "indicator"]
+        )
+
+    def prepare_data(self, years=None):
+        """
+        Prepares the data for plotting by creating a pivot table with years as columns and month_day as index.
+        """
+        if years is not None:
+            df = self.df[self.df["year"].isin(years)]
+        else:
+            df = self.df
+        years = sorted(df["year"].unique())
+        monthdays = sorted(df["month_day"].unique())
+        year_idx = {y: i for i, y in enumerate(years)}
+        md_idx = {md: i for i, md in enumerate(monthdays)}
+
+        arr = np.full((len(years), len(monthdays)), np.nan)
+        for _, row in df.iterrows():
+            i = year_idx[row["year"]]
+            j = md_idx[row["month_day"]]
+            arr[i, j] = row["indicator"]
+        return arr, years, monthdays
+
+    def plot_time_series(self, years=None):
+        """
+        Plots the time series of values at (lon, lat) extracted from the tif files.
+        """
+        arr, years, monthdays = self.prepare_data(years)
+        unique_vals = np.unique(arr[~np.isnan(arr)]).astype(int)
+
+        # plot
+        cmap_colors = [self.class_colors[v] for v in unique_vals]
+        cmap = mcolors.ListedColormap(cmap_colors)
+        norm = mcolors.BoundaryNorm(np.append(unique_vals, unique_vals[-1] + 1), cmap.N)
+        fig, ax = plotting.plot_drought_indicator(arr, monthdays, years, cmap, norm)
+        # Custom legend
+        legend_elements = [
+            mpatches.Patch(
+                facecolor=self.class_colors[v], label=f"{v}: {self.class_dict[v]}"
+            )
+            for v in unique_vals
+        ]
+        ax.legend(
+            handles=legend_elements,
+            bbox_to_anchor=(1.05, 1),
+            loc="upper left",
+            borderaxespad=0.0,
+        )
+        fig.tight_layout()
+        return fig

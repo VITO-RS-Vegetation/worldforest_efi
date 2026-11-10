@@ -6,12 +6,12 @@ Table builders take ``extents``: a mapping ``{extent_label: bounds}`` where
 so the same code works for any number of spatial extents.
 """
 
-from typing import Dict, Mapping
+from collections.abc import Mapping
 
 import numpy as np
 import pandas as pd
 
-Bounds = Dict[str, object]
+Bounds = dict[str, object]
 
 
 def class_distribution_percent(masked_data) -> pd.DataFrame:

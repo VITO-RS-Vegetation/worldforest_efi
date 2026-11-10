@@ -13,7 +13,7 @@ Typical use::
 """
 
 from . import parameters
-from .layers import ClassMap
+from .layers import ClassMap, DatedClassMap
 from .plotting import (
     map_all_plots,
     map_plot_location,
@@ -46,6 +46,7 @@ annual_disturbance_class = ClassMap(**parameters.ANNUAL_DISTURBANCE, years=years
 disturbance_agent_class = ClassMap(**parameters.DISTURBANCE_AGENT, years=years)
 latest_disturbance_class = ClassMap(**parameters.LATEST_DISTURBANCE)
 agent_aggregated_class = ClassMap(**parameters.AGENT_AGGREGATED)
+combined_drought_indicator = DatedClassMap(**parameters.COMBINED_DROUGHT_INDICATOR)
 
 
 def compute_disturbance_stats(years, extents):
@@ -71,12 +72,14 @@ def plot_disturbance_timeline(df, years=years, title=None):
 
 __all__ = [
     "ClassMap",
+    "DatedClassMap",
     "SpatialBounds",
     "agent_aggregated_class",
     "annual_disturbance_class",
     "canopy_height_class",
     "class_distribution_percent",
     "class_distribution_table",
+    "combined_drought_indicator",
     "compute_disturbance_stats",
     "disturbance_agent_class",
     "foliage_height_diversity_class",

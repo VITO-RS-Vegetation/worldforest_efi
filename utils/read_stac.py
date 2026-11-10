@@ -1,8 +1,9 @@
-from pystac_client import Client
-from yarl import URL
 from pathlib import Path
+
 import rioxarray
 import xarray as xr
+from pystac_client import Client
+from yarl import URL
 
 
 def get_local_path(item_collection):

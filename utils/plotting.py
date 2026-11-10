@@ -349,3 +349,26 @@ def plot_value_distributions(layers, extents, bins=40, title=None):
         fig.suptitle(title)
     fig.tight_layout()
     return fig
+
+
+def plot_drought_indicator(arr, monthdays, years, cmap, norm):
+    fig, ax = plt.subplots(figsize=(len(monthdays) * 0.45, len(years) * 0.65))
+    im = ax.imshow(arr, aspect="auto", cmap=cmap, norm=norm, origin="lower")
+    # Set ticks and labels: x=monthdays, y=years
+    ax.set_xticks(np.arange(len(monthdays)))
+    ax.set_xticklabels(monthdays, rotation=90)
+    ax.set_yticks(np.arange(len(years)))
+    ax.set_yticklabels(years)
+    ax.set_xlabel("Month-Day")
+    ax.set_ylabel("Year")
+    ax.set_title("Value by Month-Day and Year")
+
+    # Draw thick horizontal lines between years
+    for y in range(1, len(years)):
+        ax.axhline(y - 0.5, color="white", linewidth=2.5, zorder=3)
+
+    # Draw thin vertical lines between month-days
+    for x in range(1, len(monthdays)):
+        ax.axvline(x - 0.5, color="black", linewidth=0.25, zorder=2)
+
+    return fig, ax,
