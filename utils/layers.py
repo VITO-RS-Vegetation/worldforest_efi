@@ -254,7 +254,7 @@ class DatedClassMap:
         class_colors=None,
     ):
         self.name = name
-        self.pattern =g re.compile(date_pattern)
+        self.pattern = re.compile(date_pattern)
         self.datafolder = Path(datafolder)
         self.filename = {}
         self.all_files = self.datafolder.rglob("*.tif")
